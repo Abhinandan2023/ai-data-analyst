@@ -1,4 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from backend.app.db.connection import get_db
 
 app=FastAPI( title="AI Data Analyst",
     description="Natural language data analysis with Text-to-SQL and clarification",
@@ -12,7 +16,9 @@ def root():
     }
 
 @app.get("/health")
-def health():
+def health(db: Session = Depends(get_db)):
+    db.execute(text("SELECT 1"))
     return{
-        "status": "healthy"
+        "status": "healthy",
+        "database": "connected",
     }
