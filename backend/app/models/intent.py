@@ -58,3 +58,12 @@ class ResolvedIntent(BaseModel):
         default_factory=dict,
         description="Resolved filters that should be applied to the query."
     )
+
+class SQLGenerationResult(BaseModel):
+    sql: str = Field(
+        description="The generated PostgreSQL SELECT query."
+    )
+
+    explanation: str = Field(
+        description="A brief explanation of what the SQL query does."
+    )
