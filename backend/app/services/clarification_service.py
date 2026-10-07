@@ -1,4 +1,7 @@
-from backend.app.models.intent import ClarificationOption, IntentAnalysis
+from backend.app.models.intent import (
+    ClarificationOption,
+    IntentAnalysis,
+)
 
 
 class ClarificationService:

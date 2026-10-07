@@ -3,6 +3,11 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+class ClarificationOption(BaseModel):
+    value: str
+    label: str
+
+
 class IntentAnalysis(BaseModel):
     intent: str = Field(
         description="The user's intended business operation."
@@ -20,6 +25,11 @@ class IntentAnalysis(BaseModel):
     clarification_question: Optional[str] = Field(
         default=None,
         description="A concise question to ask the user if clarification is needed."
+    )
+
+    clarification_options: list[ClarificationOption] = Field(
+        default_factory=list,
+        description="Possible options the user can choose from when clarification is needed."
     )
 
     confidence: float = Field(
