@@ -42,3 +42,19 @@ class IntentAnalysis(BaseModel):
         default=None,
         description="Metric specified by the user, if applicable."
     )
+
+
+class ResolvedIntent(BaseModel):
+    intent: str = Field(
+        description="The resolved business operation."
+    )
+
+    metric: Optional[str] = Field(
+        default=None,
+        description="The resolved metric, if applicable."
+    )
+
+    filters: dict[str, str] = Field(
+        default_factory=dict,
+        description="Resolved filters that should be applied to the query."
+    )
