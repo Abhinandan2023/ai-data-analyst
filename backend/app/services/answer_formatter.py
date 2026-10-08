@@ -27,6 +27,20 @@ class AnswerFormatter:
             )
 
         if (
+            resolved_intent.intent == "identify_top_customer"
+            and resolved_intent.metric == "order_count"
+        ):
+            row = rows[0]
+
+            name = row["name"]
+            order_count = row["order_count"]
+
+            return (
+                f"{name} has the highest number of completed orders, "
+                f"with {order_count} orders."
+            )
+
+        if (
             resolved_intent.intent == "calculate_total_revenue"
             and resolved_intent.metric == "total_revenue"
         ):

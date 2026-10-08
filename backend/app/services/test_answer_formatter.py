@@ -66,3 +66,30 @@ def test_format_empty_result():
     )
 
     assert answer == "No matching records were found."
+
+
+def test_format_top_customer_by_order_count():
+    formatter = AnswerFormatter()
+
+    resolved_intent = ResolvedIntent(
+        intent="identify_top_customer",
+        metric="order_count",
+        filters={},
+    )
+
+    rows = [
+        {
+            "name": "Rahul Sharma",
+            "order_count": 5,
+        }
+    ]
+
+    result = formatter.format(
+        resolved_intent=resolved_intent,
+        rows=rows,
+    )
+
+    assert result == (
+        "Rahul Sharma has the highest number of completed orders, "
+        "with 5 orders."
+    )
