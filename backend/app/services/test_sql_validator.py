@@ -68,3 +68,36 @@ def test_dangerous_sql_is_rejected():
         match="Only SELECT queries are allowed",
     ):
         validator.validate(dangerous_sql)
+
+def test_cte_select_sql_is_accepted():
+    validator = SQLValidator()
+
+    sql = """
+    WITH order_totals AS (
+        SELECT
+            o.id AS order_id,
+            o.customer_id,
+            SUM(oi.quantity * oi.unit_price) AS order_total
+        FROM orders o
+        JOIN order_items oi
+            ON o.id = oi.order_id
+        WHERE o.status = 'completed'
+        GROUP BY o.id, o.customer_id
+    )
+    SELECT
+        c.id,
+        c.name,
+        AVG(ot.order_total) AS average_order_value
+    FROM customers c
+    JOIN order_totals ot
+        ON c.id = ot.customer_id
+    GROUP BY c.id, c.name
+    ORDER BY average_order_value DESC
+    LIMIT 1;
+    """
+
+    result = validator.validate(sql)
+
+    assert result.startswith("WITH")
+    assert "SELECT" in result.upper()
+    assert "AVG" in result.upper()

@@ -21,7 +21,6 @@ class SQLPipeline:
             resolved_intent=resolved_intent,
             schema=str(schema),
         )
-
         validated_sql = self.validator.validate(
             generated.sql
         )

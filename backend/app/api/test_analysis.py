@@ -43,3 +43,4 @@ def test_analyze_resolves_order_count_and_returns_answer():
     assert "highest number of completed orders" in data["answer"]
     assert "order_count" in data["sql"].lower()
     assert "count" in data["sql"].lower()
+    
