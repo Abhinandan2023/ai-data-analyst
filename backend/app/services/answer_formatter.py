@@ -13,7 +13,10 @@ class AnswerFormatter:
             return "No matching records were found."
 
         if (
-            resolved_intent.intent == "identify_best_customer"
+            resolved_intent.intent in {
+                "identify_best_customer",
+                "identify_top_customer_by_spending",
+            }
             and resolved_intent.metric == "total_spending"
         ):
             row = rows[0]
