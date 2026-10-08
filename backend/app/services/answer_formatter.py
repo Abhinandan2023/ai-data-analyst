@@ -1,4 +1,5 @@
 from backend.app.models.intent import ResolvedIntent
+from backend.app.models.intent_types import IntentType
 
 
 class AnswerFormatter:
@@ -13,10 +14,7 @@ class AnswerFormatter:
             return "No matching records were found."
 
         if (
-            resolved_intent.intent in {
-                "identify_best_customer",
-                "identify_top_customer_by_spending",
-            }
+            resolved_intent.intent == IntentType.IDENTIFY_TOP_CUSTOMER
             and resolved_intent.metric == "total_spending"
         ):
             row = rows[0]

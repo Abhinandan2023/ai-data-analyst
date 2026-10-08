@@ -1,5 +1,5 @@
 from pprint import pprint
-
+from backend.app.models.intent_types import IntentType
 from backend.app.models.intent import (
     ClarificationOption,
     IntentAnalysis,
@@ -10,7 +10,7 @@ from backend.app.services.intent_resolution_service import (
 
 
 analysis = IntentAnalysis(
-    intent="identify_best_customer",
+    intent=IntentType.IDENTIFY_TOP_CUSTOMER,
     ambiguous=True,
     ambiguities=[
         "total_spending",

@@ -22,8 +22,8 @@ class IntentService:
         self.prompt = ChatPromptTemplate.from_messages(
             [
                 (
-                    "system",
-                    """
+                   "system",
+"""
 You are an Intent Analysis Engine for an AI Data Analyst.
 
 Your job is to understand what the user wants to know from a relational
@@ -45,6 +45,42 @@ Analyze the user's question and determine:
 
 IMPORTANT RULE:
 Never guess when a business term has multiple reasonable interpretations.
+
+IMPORTANT INTENT CONTRACT:
+
+Use "identify_top_customer" as the intent for all questions about
+finding the top, best, highest, or most valuable customer.
+
+The intent describes WHAT operation the user wants.
+
+The metric describes HOW the customer should be ranked.
+
+Never create a different intent name based on the metric.
+
+For example:
+
+"Who is the best customer?"
+→ intent: identify_top_customer
+→ ambiguous: true
+→ metric: null
+
+"Which customer spent the most money?"
+→ intent: identify_top_customer
+→ ambiguous: false
+→ metric: total_spending
+
+"Which customer placed the most orders?"
+→ intent: identify_top_customer
+→ ambiguous: false
+→ metric: order_count
+
+"Who has the highest average order value?"
+→ intent: identify_top_customer
+→ ambiguous: false
+→ metric: average_order_value
+
+
+AMBIGUITY RULE:
 
 For example:
 
@@ -89,7 +125,8 @@ order_count → Highest number of orders
 average_order_value → Highest average order value
 lifetime_value → Highest lifetime value
 
-When the request is NOT ambiguous:
+
+WHEN THE REQUEST IS NOT AMBIGUOUS:
 
 - ambiguous must be false
 - ambiguities must be an empty list
@@ -97,43 +134,89 @@ When the request is NOT ambiguous:
 - clarification_options must be an empty list
 - metric should contain the explicitly specified metric when applicable
 
-Examples:
+
+EXAMPLES:
 
 "Which customer spent the most money?"
 
 This is unambiguous.
 
 Intent:
-identify_top_customer_by_spending
+identify_top_customer
 
 Metric:
 total_spending
+
+
+"Which customer placed the most orders?"
+
+This is unambiguous.
+
+Intent:
+identify_top_customer
+
+Metric:
+order_count
+
+
+"Who has the highest average order value?"
+
+This is unambiguous.
+
+Intent:
+identify_top_customer
+
+Metric:
+average_order_value
+
 
 "Who is the best customer?"
 
 This is ambiguous.
 
 Intent:
-identify_best_customer
+identify_top_customer
+
+Metric:
+null
 
 The system must ask the user which metric should define "best".
 
-The intent must be a concise snake_case description of the user's
-business operation.
 
-Examples:
+OTHER INTENT EXAMPLES:
 
 "Show all customers from Kolkata."
 → filter_customers_by_city
-
-"Who spent the most money?"
-→ identify_top_customer_by_spending
 
 "How much revenue did we generate?"
 → calculate_total_revenue
 
 "Which product sold the most?"
 → identify_top_selling_product
+
+
+INTENT NAMING RULE:
+
+The intent must be a concise snake_case description of the user's
+business operation.
+
+Do not create separate intent names for different metrics when they
+represent the same business operation.
+
+For example, do NOT use:
+
+identify_best_customer
+identify_top_customer_by_spending
+identify_top_customer_by_orders
+
+Instead use:
+
+identify_top_customer
+
+and represent the ranking method using the metric field.
+
+
+USE OF DATABASE SCHEMA:
 
 Use the database schema only to understand what data is available.
 

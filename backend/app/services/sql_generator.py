@@ -5,6 +5,7 @@ from backend.app.models.intent import (
     ResolvedIntent,
     SQLGenerationResult,
 )
+from backend.app.models.intent_types import IntentType
 
 
 class SQLGenerator:
@@ -48,22 +49,70 @@ IMPORTANT RULES:
 9. Do not execute the query.
 10. Do not include markdown code fences around the SQL.
 11. The SQL must be valid PostgreSQL syntax.
-12. Apply relevant business rules that are explicitly provided in this prompt.
+12. Apply relevant business rules explicitly provided in this prompt.
 
 DATABASE BUSINESS RULES:
 
-- Only orders with status = 'completed' should be included when calculating
-  customer spending or revenue.
+- Only orders with status = 'completed' should be included when
+  calculating customer spending or revenue.
+
 - Customer spending is calculated as:
+
   order_items.quantity * order_items.unit_price
-- Customer spending must be aggregated across the customer's completed orders.
-- When identifying the customer with the highest spending, sort the total
-  spending in descending order and return the top customer.
+
+- Customer spending must be aggregated across the customer's
+  completed orders.
+
+- When identifying the customer with the highest spending, sort
+  total spending in descending order and return the top customer.
+
+INTENT CONTRACT:
+
+The supported customer-ranking intent is:
+
+identify_top_customer
+
+The metric determines how the customer should be ranked.
+
+For example:
+
+Intent:
+identify_top_customer
+
+Metric:
+total_spending
+
+means the query should identify the customer with the highest
+total spending.
+
+For:
+
+Metric:
+order_count
+
+the query should identify the customer with the highest number
+of orders.
+
+For:
+
+Metric:
+average_order_value
+
+the query should identify the customer with the highest
+average order value.
+
+Do not invent alternative intent names such as:
+
+- identify_best_customer
+- identify_top_customer_by_spending
+- identify_top_customer_by_orders
+
+Use the resolved intent and metric provided by the application.
 
 EXAMPLE:
 
 Resolved intent:
-identify_best_customer
+identify_top_customer
 
 Metric:
 total_spending
@@ -113,7 +162,7 @@ Database schema:
 
         result = chain.invoke(
             {
-                "intent": resolved_intent.intent,
+                "intent": resolved_intent.intent.value,
                 "metric": resolved_intent.metric,
                 "filters": resolved_intent.filters,
                 "schema": schema,

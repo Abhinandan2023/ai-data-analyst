@@ -29,9 +29,6 @@ class AnalysisOrchestrator:
         schema=schema,
         )
 
-        print("\n--- Intent Analysis ---")
-        print(intent_analysis.model_dump())
- 
         if intent_analysis.ambiguous and selected_option is None:
 
             options = self.clarification_service.build_options(
@@ -59,9 +56,6 @@ class AnalysisOrchestrator:
                 analysis=intent_analysis,
                 selected_option="",
             )
-
-        print("\n--- Resolved Intent ---")
-        print(resolved_intent.model_dump())
 
   
         result = self.analysis_service.analyze(

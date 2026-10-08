@@ -1,6 +1,7 @@
 from backend.app.db.connection import SessionLocal
 from backend.app.models.intent import ResolvedIntent
 from backend.app.services.analysis_service import AnalysisService
+from backend.app.models.intent_types import IntentType
 
 
 def test_analysis_service():
@@ -8,7 +9,7 @@ def test_analysis_service():
     service = AnalysisService()
 
     resolved_intent = ResolvedIntent(
-        intent="identify_best_customer",
+        intent=IntentType.IDENTIFY_TOP_CUSTOMER,
         metric="total_spending",
     )
 

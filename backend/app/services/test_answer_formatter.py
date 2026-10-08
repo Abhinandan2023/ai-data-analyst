@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from backend.app.models.intent import ResolvedIntent
+from backend.app.models.intent_types import IntentType
 from backend.app.services.answer_formatter import AnswerFormatter
 
 
@@ -10,7 +11,7 @@ formatter = AnswerFormatter()
 def test_format_best_customer():
 
     resolved_intent = ResolvedIntent(
-        intent="identify_best_customer",
+        intent=IntentType.IDENTIFY_TOP_CUSTOMER,
         metric="total_spending",
     )
 
@@ -39,7 +40,7 @@ def test_format_best_customer():
 def test_format_no_results():
 
     resolved_intent = ResolvedIntent(
-        intent="identify_best_customer",
+        intent=IntentType.IDENTIFY_TOP_CUSTOMER,
         metric="total_spending",
     )
 

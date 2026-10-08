@@ -2,15 +2,21 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from enum import Enum
 
+from backend.app.models.intent_types import IntentType
+
+
+class IntentType(str, Enum):
+    IDENTIFY_TOP_CUSTOMER = "identify_top_customer"
 class ClarificationOption(BaseModel):
     value: str
     label: str
 
 
 class IntentAnalysis(BaseModel):
-    intent: str = Field(
-        description="The user's intended business operation."
+    intent: IntentType = Field(
+    description="The user's intended business operation."
     )
 
     ambiguous: bool = Field(
@@ -45,8 +51,8 @@ class IntentAnalysis(BaseModel):
 
 
 class ResolvedIntent(BaseModel):
-    intent: str = Field(
-        description="The resolved business operation."
+    intent: IntentType = Field(
+    description="The resolved business operation."
     )
 
     metric: Optional[str] = Field(
