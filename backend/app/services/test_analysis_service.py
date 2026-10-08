@@ -1,40 +1,68 @@
 from backend.app.db.connection import SessionLocal
 from backend.app.models.intent import ResolvedIntent
-from backend.app.services.analysis_service import AnalysisService
 from backend.app.models.intent_types import IntentType
+from backend.app.services.analysis_service import AnalysisService
 
 
 def test_analysis_service():
 
     service = AnalysisService()
 
-    resolved_intent = ResolvedIntent(
-        intent=IntentType.IDENTIFY_TOP_CUSTOMER,
-        metric="total_spending",
-    )
-
     db = SessionLocal()
 
     try:
-        result = service.analyze(
-            db=db,
-            resolved_intent=resolved_intent,
+        # Test 1: Top customer
+        customer_intent = ResolvedIntent(
+            intent=IntentType.IDENTIFY_TOP_CUSTOMER,
+            metric="total_spending",
         )
 
+        customer_result = service.analyze(
+            db=db,
+            resolved_intent=customer_intent,
+        )
+
+        print("\n--- Customer Analysis ---")
+
         print("\nGenerated SQL:")
-        print(result["sql"])
+        print(customer_result["sql"])
 
         print("\nRows:")
-        print(result["rows"])
+        print(customer_result["rows"])
 
         print("\nFinal Answer:")
-        print(result["answer"])
+        print(customer_result["answer"])
 
-        assert result["rows"]
-        assert "Rahul Sharma" in result["answer"]
-        assert "219,000.00" in result["answer"]
+        assert customer_result["rows"]
+        assert "Rahul Sharma" in customer_result["answer"]
+        assert "219,000.00" in customer_result["answer"]
 
-        print("\nAnalysis service test passed.")
+        # Test 2: Total revenue
+        revenue_intent = ResolvedIntent(
+            intent=IntentType.CALCULATE_TOTAL_REVENUE,
+            metric="total_revenue",
+        )
+
+        revenue_result = service.analyze(
+            db=db,
+            resolved_intent=revenue_intent,
+        )
+
+        print("\n--- Revenue Analysis ---")
+
+        print("\nGenerated SQL:")
+        print(revenue_result["sql"])
+
+        print("\nRows:")
+        print(revenue_result["rows"])
+
+        print("\nFinal Answer:")
+        print(revenue_result["answer"])
+
+        assert revenue_result["rows"]
+        assert "440,500.00" in revenue_result["answer"]
+
+        print("\nAnalysis service tests passed.")
 
     finally:
         db.close()

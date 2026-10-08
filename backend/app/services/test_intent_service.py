@@ -16,3 +16,11 @@ result = service.analyze(
 )
 
 pprint(result.model_dump())
+
+revenue_result = service.analyze(
+    question="What is our total revenue?",
+    schema=schema,
+)
+
+print("\nRevenue Intent Test:")
+pprint(revenue_result.model_dump())

@@ -2,13 +2,11 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from enum import Enum
 
 from backend.app.models.intent_types import IntentType
 
 
-class IntentType(str, Enum):
-    IDENTIFY_TOP_CUSTOMER = "identify_top_customer"
+
 class ClarificationOption(BaseModel):
     value: str
     label: str
