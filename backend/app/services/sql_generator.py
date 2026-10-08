@@ -5,8 +5,6 @@ from backend.app.models.intent import (
     ResolvedIntent,
     SQLGenerationResult,
 )
-from backend.app.models.intent_types import IntentType
-
 
 class SQLGenerator:
 
@@ -162,7 +160,7 @@ Database schema:
 
         result = chain.invoke(
             {
-                "intent": resolved_intent.intent.value,
+                "intent": resolved_intent.intent,
                 "metric": resolved_intent.metric,
                 "filters": resolved_intent.filters,
                 "schema": schema,

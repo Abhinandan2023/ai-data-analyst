@@ -1,38 +1,38 @@
-from pprint import pprint
-
 from backend.app.db.connection import SessionLocal
 from backend.app.services.sql_executor import SQLExecutor
 
 
-sql = """
-SELECT
-    c.id,
-    c.name,
-    c.email,
-    SUM(oi.quantity * oi.unit_price) AS total_spending
-FROM customers c
-JOIN orders o
-    ON c.id = o.customer_id
-JOIN order_items oi
-    ON o.id = oi.order_id
-WHERE o.status = 'completed'
-GROUP BY c.id, c.name, c.email
-ORDER BY total_spending DESC
-LIMIT 1
-"""
+def test_sql_executor_returns_top_customer():
+    sql = """
+    SELECT
+        c.id,
+        c.name,
+        c.email,
+        SUM(oi.quantity * oi.unit_price) AS total_spending
+    FROM customers c
+    JOIN orders o
+        ON c.id = o.customer_id
+    JOIN order_items oi
+        ON o.id = oi.order_id
+    WHERE o.status = 'completed'
+    GROUP BY c.id, c.name, c.email
+    ORDER BY total_spending DESC
+    LIMIT 1
+    """
 
+    db = SessionLocal()
 
-db = SessionLocal()
+    try:
+        executor = SQLExecutor()
 
-try:
-    executor = SQLExecutor()
+        result = executor.execute(
+            db=db,
+            sql=sql,
+        )
 
-    result = executor.execute(
-        db=db,
-        sql=sql,
-    )
+        assert len(result) == 1
+        assert result[0]["name"] == "Rahul Sharma"
+        assert result[0]["total_spending"] == 219000.00
 
-    pprint(result)
-
-finally:
-    db.close()
+    finally:
+        db.close()

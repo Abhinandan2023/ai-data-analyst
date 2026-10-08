@@ -16,6 +16,7 @@ class IntentResolutionService:
             return ResolvedIntent(
                 intent=analysis.intent,
                 metric=analysis.metric,
+                filters=analysis.filters,
             )
 
         valid_options = {
@@ -31,4 +32,5 @@ class IntentResolutionService:
         return ResolvedIntent(
             intent=analysis.intent,
             metric=selected_option,
+            filters=analysis.filters,
         )

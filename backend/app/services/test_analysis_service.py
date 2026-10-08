@@ -1,6 +1,5 @@
 from backend.app.db.connection import SessionLocal
 from backend.app.models.intent import ResolvedIntent
-from backend.app.models.intent_types import IntentType
 from backend.app.services.analysis_service import AnalysisService
 
 
@@ -13,8 +12,9 @@ def test_analysis_service():
     try:
         # Test 1: Top customer
         customer_intent = ResolvedIntent(
-            intent=IntentType.IDENTIFY_TOP_CUSTOMER,
+            intent="identify_top_customer",
             metric="total_spending",
+            filters={},
         )
 
         customer_result = service.analyze(
@@ -39,8 +39,9 @@ def test_analysis_service():
 
         # Test 2: Total revenue
         revenue_intent = ResolvedIntent(
-            intent=IntentType.CALCULATE_TOTAL_REVENUE,
+            intent="calculate_total_revenue",
             metric="total_revenue",
+            filters={},
         )
 
         revenue_result = service.analyze(

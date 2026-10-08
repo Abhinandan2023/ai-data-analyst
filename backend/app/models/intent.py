@@ -3,18 +3,14 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-from backend.app.models.intent_types import IntentType
-
-
-
 class ClarificationOption(BaseModel):
     value: str
     label: str
 
 
 class IntentAnalysis(BaseModel):
-    intent: IntentType = Field(
-    description="The user's intended business operation."
+    intent: str = Field(
+        description="The business operation the user wants to perform."
     )
 
     ambiguous: bool = Field(
@@ -47,10 +43,15 @@ class IntentAnalysis(BaseModel):
         description="Metric specified by the user, if applicable."
     )
 
+    filters: dict[str, str] = Field(
+        default_factory=dict,
+        description="Filters explicitly specified by the user."
+    )
+
 
 class ResolvedIntent(BaseModel):
-    intent: IntentType = Field(
-    description="The resolved business operation."
+    intent: str = Field(
+        description="The resolved business operation."
     )
 
     metric: Optional[str] = Field(
@@ -62,6 +63,7 @@ class ResolvedIntent(BaseModel):
         default_factory=dict,
         description="Resolved filters that should be applied to the query."
     )
+
 
 class SQLGenerationResult(BaseModel):
     sql: str = Field(

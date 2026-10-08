@@ -3,8 +3,8 @@ from sqlalchemy import text
 from backend.app.db.connection import engine
 
 
-with engine.connect() as connection:
-    result = connection.execute(text("SELECT 1"))
+def test_database_connection():
+    with engine.connect() as connection:
+        result = connection.execute(text("SELECT 1"))
 
-    print("Database connection successful!")
-    print(f"Result: {result.scalar()}")
+        assert result.scalar() == 1
