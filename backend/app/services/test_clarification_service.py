@@ -1,27 +1,44 @@
+from backend.app.models.intent import (
+    ClarificationOption,
+    IntentAnalysis,
+)
 from backend.app.services.clarification_service import ClarificationService
-from backend.app.services.intent_service import IntentService
-from backend.app.services.schema_inspector import get_database_schema
 
 
 def test_clarification_options_for_ambiguous_customer_question():
-    schema = get_database_schema()
-
-    intent_service = IntentService()
-    clarification_service = ClarificationService()
-
-    question = "Who is the best customer?"
-
-    analysis = intent_service.analyze(
-        question=question,
-        schema=str(schema),
+    analysis = IntentAnalysis(
+        intent="identify_top_customer",
+        ambiguous=True,
+        ambiguities=["The meaning of 'best customer' is unclear."],
+        clarification_question="How should the best customer be determined?",
+        clarification_options=[
+            ClarificationOption(
+                value="total_spending",
+                label="Highest total spending",
+            ),
+            ClarificationOption(
+                value="order_count",
+                label="Highest number of orders",
+            ),
+            ClarificationOption(
+                value="average_order_value",
+                label="Highest average order value",
+            ),
+            ClarificationOption(
+                value="lifetime_value",
+                label="Highest lifetime value",
+            ),
+        ],
+        confidence=0.95,
+        metric=None,
+        filters={},
     )
 
-    assert analysis.ambiguous is True
-    assert analysis.intent == "identify_top_customer"
+    clarification_service = ClarificationService()
 
     options = clarification_service.build_options(analysis)
 
-    assert options
+    assert len(options) == 4
     assert any(
         option.value == "total_spending"
         for option in options
@@ -30,3 +47,22 @@ def test_clarification_options_for_ambiguous_customer_question():
         option.value == "order_count"
         for option in options
     )
+
+
+def test_clarification_options_are_empty_for_unambiguous_question():
+    analysis = IntentAnalysis(
+        intent="calculate_total_revenue",
+        ambiguous=False,
+        ambiguities=[],
+        clarification_question=None,
+        clarification_options=[],
+        confidence=0.98,
+        metric="total_revenue",
+        filters={},
+    )
+
+    clarification_service = ClarificationService()
+
+    options = clarification_service.build_options(analysis)
+
+    assert options == []
