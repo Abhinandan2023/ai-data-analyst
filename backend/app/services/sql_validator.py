@@ -35,16 +35,10 @@ class SQLValidator:
         r"\.([a-zA-Z_][a-zA-Z0-9_]*)\b"
     )
 
-    CTE_PATTERN = re.compile(
-        r"\bWITH\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+AS\s*\(",
-        re.IGNORECASE,
-    )
-
     def validate(self, sql: str) -> str:
+        """Validate generated SQL and return the cleaned query."""
         if not sql or not sql.strip():
-            raise SQLValidationError(
-                "SQL query cannot be empty."
-            )
+            raise SQLValidationError("SQL query cannot be empty.")
 
         cleaned_sql = sql.strip().rstrip(";").strip()
 
@@ -77,6 +71,7 @@ class SQLValidator:
         return cleaned_sql
 
     def _validate_sql_syntax(self, sql: str) -> None:
+        """Check SQL syntax and ensure only one query is present."""
         try:
             statements = sqlglot.parse(sql, read="postgres")
 
@@ -86,9 +81,7 @@ class SQLValidator:
                 )
 
             if not statements or statements[0] is None:
-                raise SQLValidationError(
-                    "Invalid SQL syntax."
-                )
+                raise SQLValidationError("Invalid SQL syntax.")
 
             statement = statements[0]
 
@@ -105,6 +98,7 @@ class SQLValidator:
             ) from exc
 
     def _validate_select_only(self, sql: str) -> None:
+        """Allow SELECT statements, including statements using CTEs."""
         if not re.match(
             r"^(SELECT\b|WITH\b)",
             sql,
@@ -115,17 +109,17 @@ class SQLValidator:
             )
 
     def _validate_forbidden_keywords(self, sql: str) -> None:
+        """Reject multiple statements and forbidden SQL operations."""
         if ";" in sql:
             raise SQLValidationError(
                 "Multiple SQL statements are not allowed."
             )
 
-        sql_upper = sql.upper()
-
         for keyword in self.FORBIDDEN_KEYWORDS:
             if re.search(
                 rf"\b{keyword}\b",
-                sql_upper,
+                sql,
+                re.IGNORECASE,
             ):
                 raise SQLValidationError(
                     f"Forbidden SQL operation detected: {keyword}"
@@ -135,59 +129,53 @@ class SQLValidator:
         self,
         sql: str,
     ) -> dict[str, set[str]]:
-        """Extract columns exposed by supported CTE definitions."""
+        """Extract CTE names and their output columns using SQLGlot."""
+        cte_columns: dict[str, set[str]] = {}
 
-        cte_columns = {}
+        try:
+            query = sqlglot.parse_one(sql, read="postgres")
+        except sqlglot.errors.ParseError as exc:
+            raise SQLValidationError(
+                "Invalid SQL syntax."
+            ) from exc
 
-        for match in self.CTE_PATTERN.finditer(sql):
-            cte_name = match.group(1).lower()
+        for cte in query.find_all(exp.CTE):
+            # Get the CTE name directly from its alias.
+            alias_node = cte.args.get("alias")
 
-            start = match.end()
-            depth = 1
-            position = start
+            if alias_node is not None and alias_node.this is not None:
+                cte_name = alias_node.this.name.lower()
+            else:
+                cte_name = cte.alias_or_name.lower()
 
-            while position < len(sql) and depth > 0:
-                if sql[position] == "(":
-                    depth += 1
-                elif sql[position] == ")":
-                    depth -= 1
+            cte_query = cte.this
 
-                position += 1
+            if isinstance(cte_query, exp.Subquery):
+                cte_query = cte_query.this
 
-            if depth != 0:
-                raise SQLValidationError(
-                    f"Invalid CTE definition: {cte_name}"
-                )
+            if isinstance(cte_query, exp.Select):
+                select = cte_query
+            else:
+                select = cte_query.find(exp.Select)
 
-            cte_body = sql[start : position - 1]
-            columns = set()
+            columns: set[str] = set()
 
-            alias_pattern = re.compile(
-                r"\bAS\s+([a-zA-Z_][a-zA-Z0-9_]*)\b",
-                re.IGNORECASE,
-            )
+            if select is not None:
+                for projection in select.expressions:
+                    if projection.alias:
+                        columns.add(projection.alias.lower())
+                    elif isinstance(projection, exp.Column):
+                        columns.add(projection.name.lower())
+                    elif projection.output_name:
+                        columns.add(projection.output_name.lower())
 
-            for alias_match in alias_pattern.finditer(cte_body):
-                columns.add(alias_match.group(1).lower())
-
-            select_match = re.search(
-                r"\bSELECT\b(.*?)\bFROM\b",
-                cte_body,
-                re.IGNORECASE | re.DOTALL,
-            )
-
-            if select_match:
-                select_clause = select_match.group(1)
-
-                qualified_column_pattern = re.compile(
-                    r"\b[a-zA-Z_][a-zA-Z0-9_]*\."
-                    r"([a-zA-Z_][a-zA-Z0-9_]*)\b"
-                )
-
-                for column_match in qualified_column_pattern.finditer(
-                    select_clause
+            # Support explicitly declared CTE columns:
+            # WITH customer_avg (customer_id, avg_value) AS (...)
+            if alias_node is not None:
+                for identifier in (
+                    alias_node.args.get("columns") or []
                 ):
-                    columns.add(column_match.group(1).lower())
+                    columns.add(identifier.name.lower())
 
             cte_columns[cte_name] = columns
 
@@ -199,6 +187,7 @@ class SQLValidator:
         schema: dict,
         cte_columns: dict[str, set[str]],
     ) -> dict[str, str]:
+        """Validate physical tables and recognize CTE references."""
         cte_names = set(cte_columns.keys())
         matches = self.TABLE_PATTERN.findall(sql)
 
@@ -207,7 +196,7 @@ class SQLValidator:
                 "No database tables could be identified."
             )
 
-        aliases = {}
+        aliases: dict[str, str] = {}
 
         reserved_words = {
             "ON",
@@ -224,6 +213,10 @@ class SQLValidator:
             "HAVING",
             "UNION",
             "OFFSET",
+            "SET",
+            "AS",
+            "AND",
+            "OR",
         }
 
         for table_name, alias in matches:
@@ -252,6 +245,7 @@ class SQLValidator:
         aliases: dict[str, str],
         cte_columns: dict[str, set[str]],
     ) -> None:
+        """Validate qualified column references."""
         column_matches = self.COLUMN_PATTERN.findall(sql)
 
         for table_reference, column_name in column_matches:
@@ -294,18 +288,15 @@ class SQLValidator:
         cte_columns: dict[str, set[str]],
     ) -> None:
         """Validate unqualified columns and allow SELECT aliases."""
-
         statements = sqlglot.parse(sql, read="postgres")
 
         if not statements or statements[0] is None:
-            raise SQLValidationError(
-                "Invalid SQL syntax."
-            )
+            raise SQLValidationError("Invalid SQL syntax.")
 
         query = statements[0]
 
         for select in query.find_all(exp.Select):
-            scope_tables = {}
+            scope_tables: dict[str, str] = {}
 
             # Identify tables visible to this SELECT.
             for table in select.find_all(exp.Table):
@@ -329,7 +320,6 @@ class SQLValidator:
                 if projection.alias
             }
 
-            # IMPORTANT: Keep this loop inside the SELECT loop.
             for column in select.find_all(exp.Column):
                 if column.table:
                     continue

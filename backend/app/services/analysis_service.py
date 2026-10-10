@@ -28,7 +28,6 @@ class AnalysisService:
             db=db,
             sql=sql,
         )
-
         answer = self.answer_formatter.format(
             resolved_intent=resolved_intent,
             rows=rows,
