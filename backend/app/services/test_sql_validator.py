@@ -101,3 +101,32 @@ def test_cte_select_sql_is_accepted():
     assert result.startswith("WITH")
     assert "SELECT" in result.upper()
     assert "AVG" in result.upper()
+
+def test_empty_sql_is_rejected():
+    with pytest.raises(
+        SQLValidationError,
+        match="SQL query cannot be empty",
+    ):
+        validator.validate("")
+
+
+def test_multiple_sql_statements_are_rejected():
+    sql = """
+    SELECT c.id FROM customers c;
+    DELETE FROM customers
+    """
+
+    with pytest.raises(
+        SQLValidationError,
+        match="Multiple SQL statements are not allowed",
+    ):
+        validator.validate(sql)
+
+def test_unknown_unqualified_column_is_rejected():
+    sql = """
+    SELECT nonexistent_column
+    FROM customers;
+    """
+
+    with pytest.raises(SQLValidationError):
+        validator.validate(sql)
