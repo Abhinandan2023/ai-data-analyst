@@ -1,4 +1,6 @@
 from unittest.mock import patch
+from groq import APIError
+from sqlalchemy.exc import SQLAlchemyError
 
 from fastapi.testclient import TestClient
 
@@ -117,3 +119,57 @@ def test_analyze_resolves_order_count_and_returns_answer():
     assert "highest number of completed orders" in data["answer"]
     assert "order_count" in data["sql"].lower()
     assert "count" in data["sql"].lower()
+
+def test_analyze_rejects_invalid_clarification_option():
+    with patch(
+        "backend.app.api.analysis.orchestrator.analyze",
+        side_effect=ValueError(
+            "Invalid clarification option: invalid_metric"
+        ),
+    ):
+        response = client.post(
+            "/analyze",
+            json={
+                "question": "Who is the best customer?",
+                "selected_option": "invalid_metric",
+            },
+        )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "Invalid clarification option: invalid_metric"
+    )
+
+def test_analyze_returns_503_when_groq_fails():
+    with patch(
+        "backend.app.api.analysis.orchestrator.analyze",
+        side_effect=APIError(
+            "Groq service unavailable",
+            request=None,
+            body=None,
+        ),
+    ):
+        response = client.post(
+            "/analyze",
+            json={"question": "What is our total revenue?"},
+        )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == (
+        "The AI service is temporarily unavailable. Please try again later."
+    )
+
+def test_analyze_returns_503_when_database_fails():
+    with patch(
+        "backend.app.api.analysis.orchestrator.analyze",
+        side_effect=SQLAlchemyError("Database connection failed"),
+    ):
+        response = client.post(
+            "/analyze",
+            json={"question": "What is our total revenue?"},
+        )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == (
+        "The database service is temporarily unavailable. Please try again later."
+    )
