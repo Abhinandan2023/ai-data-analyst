@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import './index.css'
 
-const API = '/api'
+const API = import.meta.env.VITE_API_BASE_URL
 
 function formatColumnName(column) {
   return String(column).replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
