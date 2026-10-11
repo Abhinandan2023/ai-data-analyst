@@ -1,6 +1,7 @@
+
 from sqlalchemy.orm import Session
+
 from backend.app.services.schema_inspector import get_database_schema
-from backend.app.models.intent import ResolvedIntent
 from backend.app.services.analysis_service import AnalysisService
 from backend.app.services.clarification_service import ClarificationService
 from backend.app.services.intent_resolution_service import IntentResolutionService
@@ -25,12 +26,11 @@ class AnalysisOrchestrator:
         schema = get_database_schema()
 
         intent_analysis = self.intent_service.analyze(
-        question=question,
-        schema=schema,
+            question=question,
+            schema=schema,
         )
 
         if intent_analysis.ambiguous and selected_option is None:
-
             options = self.clarification_service.build_options(
                 intent_analysis
             )
@@ -43,8 +43,8 @@ class AnalysisOrchestrator:
                 ),
                 "clarification_options": options,
                 "sql": None,
+                "rows": [],
             }
-
 
         if intent_analysis.ambiguous:
             resolved_intent = self.intent_resolution_service.resolve(
@@ -57,18 +57,16 @@ class AnalysisOrchestrator:
                 selected_option="",
             )
 
-  
         result = self.analysis_service.analyze(
             db=db,
             resolved_intent=resolved_intent,
         )
 
-      
         return {
             "status": "completed",
             "answer": result["answer"],
             "clarification_question": None,
             "clarification_options": [],
             "sql": result["sql"],
+            "rows": result.get("rows", []),
         }
-    

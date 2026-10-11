@@ -28,6 +28,8 @@ class AnalysisService:
             db=db,
             sql=sql,
         )
+        print("DEBUG resolved_intent:", resolved_intent)
+        print("DEBUG rows:", rows)
         answer = self.answer_formatter.format(
             resolved_intent=resolved_intent,
             rows=rows,

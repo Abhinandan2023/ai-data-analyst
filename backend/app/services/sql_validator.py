@@ -35,8 +35,9 @@ class SQLValidator:
         r"\.([a-zA-Z_][a-zA-Z0-9_]*)\b"
     )
 
-    def validate(self, sql: str) -> str:
+    def validate(self, sql: str, schema: dict | None = None) -> str:
         """Validate generated SQL and return the cleaned query."""
+
         if not sql or not sql.strip():
             raise SQLValidationError("SQL query cannot be empty.")
 
@@ -46,7 +47,11 @@ class SQLValidator:
         self._validate_select_only(cleaned_sql)
         self._validate_forbidden_keywords(cleaned_sql)
 
-        schema = get_database_schema()
+        # Reuse the schema supplied by SQLPipeline.
+        # Fetch it only when validate() is called independently.
+        if schema is None:
+            schema = get_database_schema()
+
         cte_columns = self._extract_cte_columns(cleaned_sql)
 
         aliases = self._validate_tables(
@@ -72,6 +77,7 @@ class SQLValidator:
 
     def _validate_sql_syntax(self, sql: str) -> None:
         """Check SQL syntax and ensure only one query is present."""
+
         try:
             statements = sqlglot.parse(sql, read="postgres")
 
@@ -99,6 +105,7 @@ class SQLValidator:
 
     def _validate_select_only(self, sql: str) -> None:
         """Allow SELECT statements, including statements using CTEs."""
+
         if not re.match(
             r"^(SELECT\b|WITH\b)",
             sql,
@@ -110,6 +117,7 @@ class SQLValidator:
 
     def _validate_forbidden_keywords(self, sql: str) -> None:
         """Reject multiple statements and forbidden SQL operations."""
+
         if ";" in sql:
             raise SQLValidationError(
                 "Multiple SQL statements are not allowed."
@@ -130,6 +138,7 @@ class SQLValidator:
         sql: str,
     ) -> dict[str, set[str]]:
         """Extract CTE names and their output columns using SQLGlot."""
+
         cte_columns: dict[str, set[str]] = {}
 
         try:
@@ -172,9 +181,7 @@ class SQLValidator:
             # Support explicitly declared CTE columns:
             # WITH customer_avg (customer_id, avg_value) AS (...)
             if alias_node is not None:
-                for identifier in (
-                    alias_node.args.get("columns") or []
-                ):
+                for identifier in alias_node.args.get("columns") or []:
                     columns.add(identifier.name.lower())
 
             cte_columns[cte_name] = columns
@@ -188,6 +195,7 @@ class SQLValidator:
         cte_columns: dict[str, set[str]],
     ) -> dict[str, str]:
         """Validate physical tables and recognize CTE references."""
+
         cte_names = set(cte_columns.keys())
         matches = self.TABLE_PATTERN.findall(sql)
 
@@ -246,6 +254,7 @@ class SQLValidator:
         cte_columns: dict[str, set[str]],
     ) -> None:
         """Validate qualified column references."""
+
         column_matches = self.COLUMN_PATTERN.findall(sql)
 
         for table_reference, column_name in column_matches:
@@ -288,6 +297,7 @@ class SQLValidator:
         cte_columns: dict[str, set[str]],
     ) -> None:
         """Validate unqualified columns and allow SELECT aliases."""
+
         statements = sqlglot.parse(sql, read="postgres")
 
         if not statements or statements[0] is None:
