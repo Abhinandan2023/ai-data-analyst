@@ -1,6 +1,7 @@
 from fastapi import Depends, FastAPI
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api.analysis import router as analysis_router
 from backend.app.db.connection import get_db
@@ -11,7 +12,15 @@ app = FastAPI(
     description="Natural language data analysis with Text-to-SQL and clarification",
     version="0.1.0",
 )
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://ai-data-analyst-1-js2v.onrender.com/",
+    ],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(analysis_router)
 
