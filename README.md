@@ -293,6 +293,4 @@ Potential next steps include:
 - Improve deployment configuration and CORS management.
 - Add screenshots or a short demo GIF to showcase the interface.
 
-## License
 
-No license file was present in the reviewed project archive. Add a `LICENSE` file before presenting the repository as open source under a specific license.
