@@ -1249,41 +1249,7 @@ feat: improve clarification experience
 
 ------------------------------------------------------------------------
 
-## 18. Interview Explanation
-
-A concise way to explain the project:
-
-> I built an AI Data Analyst that translates natural-language business
-> questions into PostgreSQL queries. I separated intent analysis from
-> SQL generation, representing the request as an operation, metric, and
-> filters. When a question such as "Who is the best customer?" is
-> ambiguous, the system asks the user to choose a metric instead of
-> guessing. The SQL generator uses the live database schema as context,
-> and a validation layer checks the generated query before execution.
-> PostgreSQL performs the actual data calculations, and the application
-> returns a readable answer, result rows, and the SQL used. I also
-> worked through database connectivity issues, Python test import
-> issues, CTE-aware SQL validation, metric-specific answer formatting,
-> and external LLM rate-limit failures.
-
-### Questions to prepare for
-
--   Why separate intent from metric and filters?
--   Why use structured output/Pydantic models?
--   How does the application inspect the schema?
--   Why use SQLAlchemy and Psycopg?
--   How are CTEs validated?
--   Why is an LLM prompt not enough to secure SQL?
--   What happens when the user asks an ambiguous question?
--   How are Groq failures and database failures handled?
--   Why should unit tests mock the LLM?
--   How would a read-only PostgreSQL role improve security?
--   How would you support multiple database schemas or tenants?
--   How would you handle expensive queries and large result sets?
-
-------------------------------------------------------------------------
-
-## 19. Final Summary
+## 18. Final Summary
 
 The project has a meaningful end-to-end foundation: a React interface,
 FastAPI endpoint, schema-aware LLM workflow, clarification engine, SQL
